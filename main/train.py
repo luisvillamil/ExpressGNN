@@ -93,6 +93,7 @@ def train(cmd_args):
         pred_arg2_set_arg1[pred][args[1]].add(args[0])
         pred_fact_set[pred].add(args)
 
+    # set up grounded rules
     grounded_rules = []
     for rule_idx, rule in enumerate(dataset.rule_ls):
       grounded_rules.append(set())
@@ -168,7 +169,7 @@ def train(cmd_args):
       cur_batch = 0
 
       for samples_by_r, latent_mask_by_r, neg_mask_by_r, obs_var_by_r, neg_var_by_r in \
-          dataset.get_batch_by_q(cmd_args.batchsize):
+          dataset.get_batch_by_q_v2(cmd_args.batchsize):
 
         node_embeds = gcn(dataset)
 
@@ -239,7 +240,7 @@ def train(cmd_args):
         valid_loss = 0.0
         cnt_batch = 0
         for samples_by_r, latent_mask_by_r, neg_mask_by_r, obs_var_by_r, neg_var_by_r in \
-            dataset.get_batch_by_q(cmd_args.batchsize, validation=True):
+            dataset.get_batch_by_q_v2(cmd_args.batchsize, validation=True):
           loss = 0.0
           r_cnt = 0
           for ind, samples in enumerate(samples_by_r):
