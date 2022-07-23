@@ -56,7 +56,7 @@ def preprocess_large(dataroot):
 
             assert const_dict.has_const('type', e1) and const_dict.has_const('type', e2)
             assert pred_name in PRED_DICT
-
+            # observed
             fact_ls.append(Fact(pred_name, [e1, e2], 1))
 
     # add all validations

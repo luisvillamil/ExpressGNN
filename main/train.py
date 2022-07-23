@@ -40,12 +40,12 @@ def train(cmd_args):
 
   # model
   if cmd_args.use_gcn == 1:
-    gcn = DataParallel(GCN(kg, cmd_args.embedding_size - cmd_args.gcn_free_size, cmd_args.gcn_free_size,
+    gcn = GCN(kg, cmd_args.embedding_size - cmd_args.gcn_free_size, cmd_args.gcn_free_size,
               num_hops=cmd_args.num_hops, num_layers=cmd_args.num_mlp_layers,
-              transductive=cmd_args.trans == 1)).to(cmd_args.device)
+              transductive=cmd_args.trans == 1).to(cmd_args.device)
   else:
-    gcn = DataParallel(TrainableEmbedding(kg, cmd_args.embedding_size)).to(cmd_args.device)
-  posterior_model = DataParallel(FactorizedPosterior(kg, cmd_args.embedding_size, cmd_args.slice_dim)).to(cmd_args.device)
+    gcn = TrainableEmbedding(kg, cmd_args.embedding_size).to(cmd_args.device)
+  posterior_model = FactorizedPosterior(kg, cmd_args.embedding_size, cmd_args.slice_dim).to(cmd_args.device)
   mln = ConditionalMLN(cmd_args, dataset.rule_ls)
 
   if cmd_args.model_load_path is not None:

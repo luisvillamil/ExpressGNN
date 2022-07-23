@@ -1,4 +1,6 @@
 class Atom:
+    # Predicate
+    # !father(x,z)
     def __init__(self, neg, pred_name, var_name_ls, var_type_ls):
         self.neg = neg
         self.pred_name = pred_name
@@ -10,6 +12,8 @@ class Atom:
 
 
 class Formula:
+    # Rule/Facts
+    # !father(x, z) v !mother(y, z) v husband(x, y)
     """
         only support clause form with disjunction, e.g. !
     """
