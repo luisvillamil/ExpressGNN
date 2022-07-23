@@ -216,16 +216,13 @@ def train(cmd_args):
             args = pred_aggregated_hid_args[pred][var_i]
             grounded_hid_score[(pred, args)] = posterior_prob[pred_i][var_i]
 
-        rule_weight_gradient = torch.zeros(len(dataset.rule_ls))
+        rule_weight_gradient = torch.zeros(len(dataset.rule_ls)).to(cmd_args.device)
         for (pred, args) in grounded_obs:
           for rule_idx in set(grounded_obs[(pred, args)]):
             rule_weight_gradient[rule_idx] += 1.0 - compute_MB_proba(dataset.rule_ls, grounded_obs[(pred, args)])
         for (pred, args) in grounded_hid:
           for rule_idx in set(grounded_hid[(pred, args)]):
             target = grounded_hid_score[(pred, args)]
-            print(rule_weight_gradient[rule_idx].get_device())
-            print(target.get_device())
-            print(compute_MB_proba(dataset.rule_ls, grounded_hid[(pred, args)]).get_device())
             rule_weight_gradient[rule_idx] += target - compute_MB_proba(dataset.rule_ls, grounded_hid[(pred, args)])
 
         for rule_idx, rule in enumerate(dataset.rule_ls):
