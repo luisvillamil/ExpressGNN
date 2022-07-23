@@ -223,6 +223,9 @@ def train(cmd_args):
         for (pred, args) in grounded_hid:
           for rule_idx in set(grounded_hid[(pred, args)]):
             target = grounded_hid_score[(pred, args)]
+            print(rule_weight_gradient[rule_idx].get_device())
+            print(target.get_device())
+            print(compute_MB_proba(dataset.rule_ls, grounded_hid[(pred, args)]).get_device())
             rule_weight_gradient[rule_idx] += target - compute_MB_proba(dataset.rule_ls, grounded_hid[(pred, args)])
 
         for rule_idx, rule in enumerate(dataset.rule_ls):
