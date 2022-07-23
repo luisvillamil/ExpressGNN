@@ -47,6 +47,10 @@ class Dataset:
         self.ht_dict_train = dict((pred_name, [dict(), dict()]) for pred_name in PRED_DICT)
 
         def add_ht(pn, c_ls, ht_dict):
+            """
+            pn=pred_name
+            c_ls=constant_list
+            """
             if load_method == 0:
                 if c_ls[0] in ht_dict[pn][0]:
                     ht_dict[pn][0][c_ls[0]].add(c_ls[0])
@@ -490,11 +494,14 @@ class Dataset:
         else:
             fact_ls = self.test_fact_ls
 
+        # here is where it is using fact_ls to get (s,p,?) and (?,p,o)
         for val, pred_name, consts in fact_ls:
 
             for rule_i, rule in enumerate(self.rule_ls):
 
                 # find rule with pred_name as head
+                # Father(X,Z) ∧ Mother(Y,Z) ⇒ Husband(X,Y)
+                # Husband(X,Y) is the head?
                 if rule.atom_ls[-1].pred_name != pred_name:
                     continue
 

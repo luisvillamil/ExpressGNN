@@ -169,7 +169,7 @@ def train(cmd_args):
       cur_batch = 0
 
       for samples_by_r, latent_mask_by_r, neg_mask_by_r, obs_var_by_r, neg_var_by_r in \
-          dataset.get_batch_by_q_v2(cmd_args.batchsize):
+          dataset.get_batch_by_q(cmd_args.batchsize):
 
         node_embeds = gcn(dataset)
 
@@ -188,6 +188,8 @@ def train(cmd_args):
                                                                  obs_var, neg_var],
                                                                 node_embeds, fast_mode=True)
 
+
+          # ELBO Mean-Field Approximation
           if cmd_args.no_entropy == 1:
             entropy = 0
           else:
@@ -240,7 +242,7 @@ def train(cmd_args):
         valid_loss = 0.0
         cnt_batch = 0
         for samples_by_r, latent_mask_by_r, neg_mask_by_r, obs_var_by_r, neg_var_by_r in \
-            dataset.get_batch_by_q_v2(cmd_args.batchsize, validation=True):
+            dataset.get_batch_by_q(cmd_args.batchsize, validation=True):
           loss = 0.0
           r_cnt = 0
           for ind, samples in enumerate(samples_by_r):
@@ -302,6 +304,8 @@ def train(cmd_args):
     hits_pred = dict([(pred_name, 0.0) for pred_name in PRED_DICT])
     cnt_pred = dict([(pred_name, 0.0) for pred_name in PRED_DICT])
 
+    # Predicting query
+    # query married_to(JohnDoe, ?),
     for pred_name, X, invX, sample in gen_eval_query(dataset, const2ind=kg.ent2idx):
       x_mat = np.array(X)
       invx_mat = np.array(invX)

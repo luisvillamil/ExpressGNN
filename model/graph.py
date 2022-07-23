@@ -35,6 +35,7 @@ class KnowledgeGraph(object):
 def gen_index(facts, predicates, dataset):
   rel2idx = dict()
   idx_rel = 0
+  # index sorted relationships in PRED_DICT
   for rel in sorted(predicates.keys()):
     if rel not in rel2idx:
       rel2idx[rel] = idx_rel
@@ -43,12 +44,14 @@ def gen_index(facts, predicates, dataset):
   
   ent2idx = dict()
   idx_ent = 0
+  # index sorted entities
   for type_name in sorted(dataset.const_sort_dict.keys()):
     for const in dataset.const_sort_dict[type_name]:
       ent2idx[const] = idx_ent
       idx_ent += 1
   idx2ent = dict(zip(ent2idx.values(), ent2idx.keys()))
   
+  # index node from entities and facts
   node2idx = ent2idx.copy()
   idx_node = len(node2idx)
   for rel in sorted(facts.keys()):
