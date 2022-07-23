@@ -227,7 +227,7 @@ def train(cmd_args):
 
         for rule_idx, rule in enumerate(dataset.rule_ls):
           rule.weight += cmd_args.learning_rate_rule_weights * rule_weight_gradient[rule_idx]
-          print(dataset.rule_ls[rule_idx].weight, end=' ')
+          # print(dataset.rule_ls[rule_idx].weight, end=' ')
 
       pbar.close()
 
