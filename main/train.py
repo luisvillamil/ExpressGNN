@@ -77,21 +77,23 @@ def train(cmd_args):
 
     # prepare data for M-step
     tqdm.write('preparing data for M-step...')
+    # Subgraphs of each constant in the predicate
     pred_arg1_set_arg2 = dict()
     pred_arg2_set_arg1 = dict()
     pred_fact_set = dict()
-    for pred in dataset.fact_dict_2:
+    for pred in dataset.fact_dict_2: # pred_name
       pred_arg1_set_arg2[pred] = dict()
       pred_arg2_set_arg1[pred] = dict()
       pred_fact_set[pred] = set()
-      for _, args in dataset.fact_dict_2[pred]:
-        if args[0] not in pred_arg1_set_arg2[pred]:
-          pred_arg1_set_arg2[pred][args[0]] = set()
-        if args[1] not in pred_arg2_set_arg1[pred]:
-          pred_arg2_set_arg1[pred][args[1]] = set()
-        pred_arg1_set_arg2[pred][args[0]].add(args[1])
-        pred_arg2_set_arg1[pred][args[1]].add(args[0])
-        pred_fact_set[pred].add(args)
+      # constants
+      for _, const_list in dataset.fact_dict_2[pred]:
+        if const_list[0] not in pred_arg1_set_arg2[pred]:
+          pred_arg1_set_arg2[pred][const_list[0]] = set() # Dict["Smoke"][Node1]
+        if const_list[1] not in pred_arg2_set_arg1[pred]:
+          pred_arg2_set_arg1[pred][const_list[1]] = set() # Dict["Smoke"][Node2]
+        pred_arg1_set_arg2[pred][const_list[0]].add(const_list[1]) # Dict["Smoke"][Node1] = Set(Node2)
+        pred_arg2_set_arg1[pred][const_list[1]].add(const_list[0]) # Dict["Smoke"][Node2] = Set(Node1)
+        pred_fact_set[pred].add(const_list) # Dict["Smoke"] = Set((N1,N2), (N1,N3)...)
 
     # set up grounded rules
     grounded_rules = []
@@ -101,23 +103,23 @@ def train(cmd_args):
       head_atom = None
       for atom in rule.atom_ls:
         if atom.neg:
-          body_atoms.append(atom)
+          body_atoms.append(atom) #!smoke(c) v !friend(c,c') 
         elif head_atom is None:
-          head_atom = atom
+          head_atom = atom # Smoke(c')
       # atom in body must be observed
       assert len(body_atoms) <= 2
       if len(body_atoms) > 0:
-        body1 = body_atoms[0]
+        body1 = body_atoms[0] # predicate(A,B)
         for _, body1_args in dataset.fact_dict_2[body1.pred_name]:
           var2arg = dict()
-          var2arg[body1.var_name_ls[0]] = body1_args[0]
-          var2arg[body1.var_name_ls[1]] = body1_args[1]
+          var2arg[body1.var_name_ls[0]] = body1_args[0] # var2arg(A) = node1
+          var2arg[body1.var_name_ls[1]] = body1_args[1] # var2arg(B) = node2
           for body2 in body_atoms[1:]:
-            if body2.var_name_ls[0] in var2arg:
-              if var2arg[body2.var_name_ls[0]] in pred_arg1_set_arg2[body2.pred_name]:
+            if body2.var_name_ls[0] in var2arg: # is C in var2arg?
+              if var2arg[body2.var_name_ls[0]] in pred_arg1_set_arg2[body2.pred_name]: # is node1 in set?
                 for body2_arg2 in pred_arg1_set_arg2[body2.pred_name][var2arg[body2.var_name_ls[0]]]:
-                  var2arg[body2.var_name_ls[1]] = body2_arg2
-                  grounded_rules[rule_idx].add(tuple(sorted(var2arg.items())))
+                  var2arg[body2.var_name_ls[1]] = body2_arg2 # var2arg[C] = node1
+                  grounded_rules[rule_idx].add(tuple(sorted(var2arg.items()))) # ((A,node1), (B, node2), ...)
             elif body2.var_name_ls[1] in var2arg:
               if var2arg[body2.var_name_ls[1]] in pred_arg2_set_arg1[body2.pred_name]:
                 for body2_arg1 in pred_arg2_set_arg1[body2.pred_name][var2arg[body2.var_name_ls[1]]]:
@@ -171,7 +173,7 @@ def train(cmd_args):
       for samples_by_r, latent_mask_by_r, neg_mask_by_r, obs_var_by_r, neg_var_by_r in \
           dataset.get_batch_by_q(cmd_args.batchsize):
 
-        node_embeds = gcn(dataset)
+        node_embeds = gcn(dataset) # Algorithm 1
 
         loss = 0.0
         r_cnt = 0
@@ -181,7 +183,7 @@ def train(cmd_args):
           obs_var = obs_var_by_r[ind]
           neg_var = neg_var_by_r[ind]
 
-          if sum([len(e[1]) for e in neg_mask]) == 0:
+          if sum([len(e[1]) for e in neg_mask]) == 0: # prevents data leakage?
             continue
 
           potential, posterior_prob, obs_xent = posterior_model([samples, neg_mask, latent_mask,
@@ -213,6 +215,7 @@ def train(cmd_args):
           'Epoch %d, train loss: %.4f, lr: %.4g' % (current_epoch, acc_loss / cur_batch, get_lr(optimizer)))
 
       # M-step: optimize the weights of logic rules
+      # Equation (8)
       with torch.no_grad():
         posterior_prob = posterior_model(pred_aggregated_hid_list, node_embeds, fast_inference_mode=True)
         for pred_i, (pred, var_ls) in enumerate(pred_aggregated_hid_list):
