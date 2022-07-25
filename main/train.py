@@ -131,19 +131,22 @@ def train(cmd_args):
     grounded_hid = dict()
     grounded_hid_score = dict()
     cnt_hid = 0
-    for rule_idx in range(len(dataset.rule_ls)):
-      rule = dataset.rule_ls[rule_idx]
+    for rule_idx, rule in enumerate(dataset.rule_ls):
+    # for rule_idx in range(len(dataset.rule_ls)):
+    #   rule = dataset.rule_ls[rule_idx]
       for var2arg in grounded_rules[rule_idx]:
         var2arg = dict(var2arg)
         head_atom = rule.atom_ls[-1]
         assert not head_atom.neg    # head atom
         pred = head_atom.pred_name
-        args = (var2arg[head_atom.var_name_ls[0]], var2arg[head_atom.var_name_ls[1]])
+        args = (var2arg[head_atom.var_name_ls[0]], var2arg[head_atom.var_name_ls[1]]) # pred(A,B)
         if args in pred_fact_set[pred]:
+          # observed predicates O
           if (pred, args) not in grounded_obs:
             grounded_obs[(pred, args)] = []
-          grounded_obs[(pred, args)].append(rule_idx)
+          grounded_obs[(pred, args)].append(rule_idx) # key=(pred, (Node1, Node2))
         else:
+          # hidden predicates H
           if (pred, args) not in grounded_hid:
             grounded_hid[(pred, args)] = []
           grounded_hid[(pred, args)].append(rule_idx)
@@ -157,10 +160,12 @@ def train(cmd_args):
         pred_aggregated_hid[pred] = []
       if pred not in pred_aggregated_hid_args:
         pred_aggregated_hid_args[pred] = []
-      pred_aggregated_hid[pred].append((dataset.const2ind[args[0]], dataset.const2ind[args[1]]))
-      pred_aggregated_hid_args[pred].append(args)
+      pred_aggregated_hid[pred].append((dataset.const2ind[args[0]], dataset.const2ind[args[1]])) # append index of constants
+      pred_aggregated_hid_args[pred].append(args) # (Node1, Node2)
     pred_aggregated_hid_list = [[pred, pred_aggregated_hid[pred]] for pred in sorted(pred_aggregated_hid.keys())]
+    # [[Smoke, [(1,2),(3,4),(5,7)...]]]
 
+    # ********TRAINING STARTS***********
     for current_epoch in range(cmd_args.num_epochs):
 
       # E-step: optimize the parameters in the posterior model
@@ -173,7 +178,8 @@ def train(cmd_args):
       for samples_by_r, latent_mask_by_r, neg_mask_by_r, obs_var_by_r, neg_var_by_r in \
           dataset.get_batch_by_q(cmd_args.batchsize):
 
-        node_embeds = gcn(dataset) # Algorithm 1
+        node_embeds = gcn(dataset)
+        print(node_embeds)
 
         loss = 0.0
         r_cnt = 0

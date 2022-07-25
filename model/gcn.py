@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
+import dgl
 from model.mlp import MLP
 from common.cmd_args import cmd_args
 
@@ -151,7 +152,7 @@ class GCN(nn.Module):
     :return:
         embeddings of all entities and relations
     """
-    
+    # STEP 1: ALGORITHM 1
     node_embeds = self.init_node_linear(self.node_feat)
 
     hop = 0
@@ -170,6 +171,7 @@ class GCN(nn.Module):
       hidden = self.MLPs[hop](hidden + node_aggregate)
       hop += 1
 
+    # STEP 2 EMBEDDING AUGMENTATION
     read_out_const_nodes_embed = torch.cat((hidden[self.const_nodes], self.const_nodes_free_params), dim=1)
 
     return read_out_const_nodes_embed

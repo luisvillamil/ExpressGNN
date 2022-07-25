@@ -69,7 +69,7 @@ class Dataset:
 
         const_cnter = Counter()
         for fact in fact_ls:
-            self.fact_dict[fact.pred_name].add((fact.val, tuple(fact.const_ls)))
+            self.fact_dict[fact.pred_name].add((fact.val, tuple(fact.const_ls))) # (1, (node1, node2))
             add_ht(fact.pred_name, fact.const_ls, self.ht_dict)
             add_ht(fact.pred_name, fact.const_ls, self.ht_dict_train)
             const_cnter.update(fact.const_ls)
@@ -85,7 +85,7 @@ class Dataset:
                                  for pred_name in self.valid_dict.keys())
 
         self.rule_ls = rule_ls
-
+        # ***********KINGSHIP DATASET ONLY****************
         # pred_atom-key dict
         self.atom_key_dict_ls = []
         for rule in self.rule_ls:
@@ -95,13 +95,14 @@ class Dataset:
                 atom_dict = dict((var_name, dict()) for var_name in atom.var_name_ls)
 
                 for i, var_name in enumerate(atom.var_name_ls):
-
-                    if atom.pred_name not in self.fact_dict:
+                    # makes sure facts are observed
+                    if atom.pred_name not in self.fact_dict: 
                         continue
-
+                    # create a list of constants for the variable in the atom
+                    # !pred(A,B)
                     for v in self.fact_dict[atom.pred_name]:
                         if v[1][i] not in atom_dict[var_name]:
-                            atom_dict[var_name][v[1][i]] = [v]
+                            atom_dict[var_name][v[1][i]] = [v] # A[node1] = [(1, (node1,node2)), (1, (node1, node4))]
                         else:
                             atom_dict[var_name][v[1][i]] += [v]
 
@@ -109,12 +110,12 @@ class Dataset:
                 if atom.pred_name in atom_key_dict:
                     for k, v in atom_dict.items():
                         if k not in atom_key_dict[atom.pred_name]:
-                            atom_key_dict[atom.pred_name][k] = v
+                            atom_key_dict[atom.pred_name][k] = v # atom_key_dict[smoke][C] = [(1, (node1, node2))...]
                 else:
                     atom_key_dict[atom.pred_name] = atom_dict
 
             self.atom_key_dict_ls.append(atom_key_dict)
-
+        # ***********KINGSHIP DATASET ONLY****************
         self.test_fact_ls = []
         self.valid_fact_ls = []
 
@@ -499,7 +500,7 @@ class Dataset:
 
             for rule_i, rule in enumerate(self.rule_ls):
 
-                # find rule with pred_name as head
+                # find rule with pred_name as fact
                 # Father(X,Z) ∧ Mother(Y,Z) ⇒ Husband(X,Y)
                 # Husband(X,Y) is the head?
                 if rule.atom_ls[-1].pred_name != pred_name:
