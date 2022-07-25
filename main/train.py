@@ -179,7 +179,7 @@ def train(cmd_args):
           dataset.get_batch_by_q(cmd_args.batchsize):
 
         node_embeds = gcn(dataset)
-        print(node_embeds)
+        print(node_embeds.shape)
 
         loss = 0.0
         r_cnt = 0
