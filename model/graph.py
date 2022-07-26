@@ -22,7 +22,7 @@ class KnowledgeGraph(object):
     # x, y = self.graph.edges()
     self.edge_types = [d['edge_type'] for d in v]
     # print(self.edge_types)
-    self.edge_pairs = np.ndarray(shape=(self.graph.num_edges(), 2), dtype=np.long)
+    self.edge_pairs = np.ndarray(shape=(self.num_edges, 2), dtype=np.long)
     self.edge_pairs[:, 0] = x
     self.edge_pairs[:, 1] = y
     
