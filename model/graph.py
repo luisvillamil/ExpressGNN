@@ -15,13 +15,13 @@ class KnowledgeGraph(object):
     self.num_ents = len(self.ent2idx)
     self.num_rels = len(self.rel2idx)
     
-    self.num_nodes = self.graph.num_nodes # len(self.graph.nodes())
-    self.num_edges = self.graph.num_edges # len(self.graph.edges())
+    self.num_nodes = self.graph.num_nodes() # len(self.graph.nodes())
+    self.num_edges = self.graph.num_edges() # len(self.graph.edges())
     
     # x, y, v = zip(*sorted(self.graph.edges(data=True), key=lambda t: t[:2]))
     x, y = self.graph.edges()
     self.edge_types = self.graph.etypes # [d['edge_type'] for d in v]
-    self.edge_pairs = np.ndarray(shape=(self.num_edges, 2), dtype=np.long)
+    self.edge_pairs = np.ndarray(shape=(self.num_edges(), 2), dtype=np.long)
     self.edge_pairs[:, 0] = x
     self.edge_pairs[:, 1] = y
     
