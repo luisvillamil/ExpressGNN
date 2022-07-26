@@ -53,7 +53,7 @@ class GCN(nn.Module):
   def __init__(self, graph, latent_dim, free_dim, num_hops=5, num_layers=2, transductive=True):
     super(GCN, self).__init__()
     
-    self.graph = dgl.from_networkx(graph)
+    self.graph = graph
     self.latent_dim = latent_dim
     self.free_dim = free_dim
     self.num_hops = num_hops

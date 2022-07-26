@@ -1,4 +1,5 @@
 import networkx as nx
+import dgl
 import numpy as np
 from common.predicate import PRED_DICT
 from itertools import product
@@ -10,7 +11,7 @@ class KnowledgeGraph(object):
     self.graph, self.edge_type2idx, \
         self.ent2idx, self.idx2ent, self.rel2idx, self.idx2rel, \
         self.node2idx, self.idx2node = gen_graph(facts, predicates, dataset)
-    
+    self.graph = dgl.from_networkx(self.graph)
     self.num_ents = len(self.ent2idx)
     self.num_rels = len(self.rel2idx)
     
@@ -58,7 +59,7 @@ def gen_index(facts, predicates, dataset):
     for fact in sorted(list(facts[rel])):
       val, args = fact
       if (rel, args) not in node2idx:
-        node2idx[(rel, args)] = idx_node
+        node2idx[(rel, args)] = idx_node # (smoke, (A,B))
         idx_node += 1
   idx2node = dict(zip(node2idx.values(), node2idx.keys()))
   
@@ -67,12 +68,13 @@ def gen_index(facts, predicates, dataset):
 
 def gen_edge_type():
   edge_type2idx = dict()
-  num_args_set = set()
+  num_args_set = set() # # of arguments in predicate relation
   for rel in PRED_DICT:
-    num_args = PRED_DICT[rel].num_args
+    num_args = PRED_DICT[rel].num_args # 2 or less
     num_args_set.add(num_args)
   idx = 0
   for num_args in sorted(list(num_args_set)):
+    # encode positions in binary
     for pos_code in product(['0', '1'], repeat=num_args):
       if '1' in pos_code:
         edge_type2idx[(0, ''.join(pos_code))] = idx
@@ -99,6 +101,7 @@ def gen_graph(facts, predicates, dataset):
   g = nx.Graph()
   ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node = gen_index(facts, predicates, dataset)
 
+  # for 2 arguments, this should be 01 and 10
   edge_type2idx = gen_edge_type()
   
   # add all the nodes by index
@@ -110,7 +113,7 @@ def gen_graph(facts, predicates, dataset):
       val, args = fact
       fact_node_idx = node2idx[(rel, args)]
       for arg in args:
-        pos_code = ''.join(['%d' % (arg == v) for v in args])
+        pos_code = ''.join(['%d' % (arg == v) for v in args]) #10 or 01
         g.add_edge(fact_node_idx, node2idx[arg],
                    edge_type=edge_type2idx[(val, pos_code)])
   return g, edge_type2idx, ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node
