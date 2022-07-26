@@ -15,22 +15,22 @@ class KnowledgeGraph(object):
     self.num_ents = len(self.ent2idx)
     self.num_rels = len(self.rel2idx)
     
-    self.num_nodes = len(self.graph.nodes())
-    self.num_edges = len(self.graph.edges())
+    self.num_nodes = self.graph.num_nodes # len(self.graph.nodes())
+    self.num_edges = self.graph.num_edges # len(self.graph.edges())
     
     x, y, v = zip(*sorted(self.graph.edges(data=True), key=lambda t: t[:2]))
-    self.edge_types = [d['edge_type'] for d in v]
+    self.edge_types = self.graph.etypes # [d['edge_type'] for d in v]
     self.edge_pairs = np.ndarray(shape=(self.num_edges, 2), dtype=np.long)
     self.edge_pairs[:, 0] = x
     self.edge_pairs[:, 1] = y
     
-    self.idx2edge = dict()
-    idx = 0
-    for x, y in self.edge_pairs:
-      self.idx2edge[idx] = (self.idx2node[x], self.idx2node[y])
-      idx += 1
-      self.idx2edge[idx] = (self.idx2node[y], self.idx2node[x])
-      idx += 1
+    # self.idx2edge = dict()
+    # idx = 0
+    # for x, y in self.edge_pairs:
+    #   self.idx2edge[idx] = (self.idx2node[x], self.idx2node[y])
+    #   idx += 1
+    #   self.idx2edge[idx] = (self.idx2node[y], self.idx2node[x])
+    #   idx += 1
 
 
 def gen_index(facts, predicates, dataset):
@@ -51,7 +51,6 @@ def gen_index(facts, predicates, dataset):
       ent2idx[const] = idx_ent
       idx_ent += 1
   idx2ent = dict(zip(ent2idx.values(), ent2idx.keys()))
-  
   # index node from entities and facts
   node2idx = ent2idx.copy()
   idx_node = len(node2idx)
@@ -62,8 +61,8 @@ def gen_index(facts, predicates, dataset):
         node2idx[(rel, args)] = idx_node # (smoke, (A,B))
         idx_node += 1
   idx2node = dict(zip(node2idx.values(), node2idx.keys()))
-  
-  return ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node
+  facts_idx = idx2node.keys()[len(idx2ent):]
+  return ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node, facts_idx
 
 
 def gen_edge_type():
@@ -99,14 +98,16 @@ def gen_graph(facts, predicates, dataset):
   
   # build bipartite graph (constant nodes and hyper predicate nodes)
   g = nx.Graph()
-  ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node = gen_index(facts, predicates, dataset)
+  ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node, facts_idx = gen_index(facts, predicates, dataset)
 
   # for 2 arguments, this should be 01 and 10
   edge_type2idx = gen_edge_type()
   
+  g.add_nodes_from(idx2ent.keys(), bipartite=0)
+  g.add_nodes_from(facts_idx, bipartite=1)
   # add all the nodes by index
-  for node_idx in idx2node:
-    g.add_node(node_idx)
+  # for node_idx in idx2node:
+  #   g.add_node(node_idx)
   
   for rel in facts.keys():
     for fact in facts[rel]:
