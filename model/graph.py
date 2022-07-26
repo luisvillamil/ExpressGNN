@@ -18,7 +18,8 @@ class KnowledgeGraph(object):
     self.num_nodes = self.graph.num_nodes # len(self.graph.nodes())
     self.num_edges = self.graph.num_edges # len(self.graph.edges())
     
-    x, y, v = zip(*sorted(self.graph.edges(data=True), key=lambda t: t[:2]))
+    # x, y, v = zip(*sorted(self.graph.edges(data=True), key=lambda t: t[:2]))
+    x, y = self.graph.edges()
     self.edge_types = self.graph.etypes # [d['edge_type'] for d in v]
     self.edge_pairs = np.ndarray(shape=(self.num_edges, 2), dtype=np.long)
     self.edge_pairs[:, 0] = x
@@ -61,7 +62,7 @@ def gen_index(facts, predicates, dataset):
         node2idx[(rel, args)] = idx_node # (smoke, (A,B))
         idx_node += 1
   idx2node = dict(zip(node2idx.values(), node2idx.keys()))
-  facts_idx = idx2node.keys()[len(idx2ent):]
+  facts_idx = [*range(len(idx2ent), idx_node)] # index for facts
   return ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node, facts_idx
 
 
