@@ -101,6 +101,7 @@ def gen_graph(facts, predicates, dataset):
 
   edge_type2idx = gen_edge_type()
   
+  # add all the nodes by index
   for node_idx in idx2node:
     g.add_node(node_idx)
   
