@@ -8,18 +8,18 @@ from itertools import product
 class KnowledgeGraph(object):
   def __init__(self, facts, predicates, dataset):
     self.dataset = dataset
-    self.graph2, self.edge_type2idx, \
+    self.graph, self.edge_type2idx, \
         self.ent2idx, self.idx2ent, self.rel2idx, self.idx2rel, \
         self.node2idx, self.idx2node = gen_graph(facts, predicates, dataset)
-    self.graph = dgl.from_networkx(self.graph2)
+    # self.graph = dgl.from_networkx(self.graph2)
     self.num_ents = len(self.ent2idx)
     self.num_rels = len(self.rel2idx)
     
-    self.num_nodes = self.graph.num_nodes() # len(self.graph.nodes())
-    self.num_edges = self.graph.num_edges() # len(self.graph.edges())
+    self.num_nodes = len(self.graph.nodes()) # self.graph.num_nodes() # 
+    self.num_edges = len(self.graph.edges()) # self.graph.num_edges() # 
     
-    x, y, v = zip(*sorted(self.graph2.edges(data=True), key=lambda t: t[:2]))
-    x, y = self.graph.edges()
+    x, y, v = zip(*sorted(self.graph.edges(data=True), key=lambda t: t[:2]))
+    # x, y = self.graph.edges()
     self.edge_types = [d['edge_type'] for d in v]
     # print(self.edge_types)
     self.edge_pairs = np.ndarray(shape=(self.graph.num_edges(), 2), dtype=np.long)
@@ -105,8 +105,6 @@ def gen_graph(facts, predicates, dataset):
   # for 2 arguments, this should be 01 and 10
   edge_type2idx = gen_edge_type()
   ents = [*range(0,len(idx2ent))]
-  print(ents)
-  print(facts_idx)
   g.add_nodes_from(ents, bipartite=0)
   g.add_nodes_from(facts_idx, bipartite=1)
   # add all the nodes by index
