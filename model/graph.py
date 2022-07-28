@@ -1,31 +1,50 @@
 import networkx as nx
 import dgl
 import numpy as np
+import torch
 from common.predicate import PRED_DICT
 from itertools import product
 
 
 class KnowledgeGraph(object):
   def __init__(self, facts, predicates, dataset):
+    # gen_dgl_graph(facts, predicates, dataset)
     self.dataset = dataset
-    self.graph, self.edge_type2idx, \
+    self.nxgraph, self.edge_type2idx, \
         self.ent2idx, self.idx2ent, self.rel2idx, self.idx2rel, \
         self.node2idx, self.idx2node = gen_graph(facts, predicates, dataset)
-    self.graph2 = dgl.bipartite_from_networkx(self.graph2)
-    print(self.graph2.etypes)
+    x, y, v = zip(*sorted(self.nxgraph.edges(data=True), key=lambda t: t[:2]))
+    # x, y = self.graph.edges()
+    self.edge_types =  [d['edge_type'] for d in v]
+    print(len(self.nxgraph.nodes()),len(self.nxgraph.edges()))
+    self.graph = gen_dgl_graph(facts, predicates, dataset)
+    # graph_dict = {}
+    # for i,edge in enumerate(v):
+    #   if ('fact',edge['edge_type'],'entity') not in graph_dict:
+    #     graph_dict[('fact',edge['edge_type'],'entity')] = []
+    #   graph_dict[('fact',edge['edge_type'],'entity')].append((x[i],y[i]))
+    # for n, nbrdict in self.graph.adj.items():
+    #   for nbr, dd in nbrdict.items():
+    #     if ('fact',dd['edge_type'],'entity') not in graph_dict:
+    #       graph_dict[('fact',dd['edge_type'],'entity')] = []
+    #     graph_dict[('fact',dd['edge_type'],'entity')].append((n,nbr))
+    # print("making dgl graph")
+    # self.graph = dgl.heterograph(graph_dict)
+    print(self.graph.etypes)
+    print(self.graph.ntypes)
+    # self.graph2 = dgl.bipartite_from_networkx(self.graph)
+    # print(self.graph2.etypes)
     self.num_ents = len(self.ent2idx)
     self.num_rels = len(self.rel2idx)
     
-    self.num_nodes = len(self.graph.nodes()) # self.graph.num_nodes() # 
-    self.num_edges = len(self.graph.edges()) # self.graph.num_edges() # 
-    
-    x, y, v = zip(*sorted(self.graph.edges(data=True), key=lambda t: t[:2]))
-    # x, y = self.graph.edges()
-    self.edge_types = [d['edge_type'] for d in v]
+    self.num_nodes = self.graph.num_nodes() # len(self.graph.nodes()) # 
+    self.num_edges = len(self.nxgraph.edges()) # self.graph.num_edges() # 
+    print(self.num_nodes, self.num_edges)
     # print(self.edge_types)
     self.edge_pairs = np.ndarray(shape=(self.num_edges, 2), dtype=np.long)
-    self.edge_pairs[:, 0] = x
-    self.edge_pairs[:, 1] = y
+    self.edge_pairs[:, 0] = x # self.graph.srcnodes('fact')
+    self.edge_pairs[:, 1] = y # self.graph.dstnodes('entity')
+    
     
     # self.idx2edge = dict()
     # idx = 0
@@ -85,7 +104,7 @@ def gen_edge_type():
         idx += 1
   return edge_type2idx
 
-
+  
 def gen_graph(facts, predicates, dataset):
   """
       generate directed knowledge graph, where each edge is from subject to object
@@ -121,3 +140,34 @@ def gen_graph(facts, predicates, dataset):
         g.add_edge(fact_node_idx, node2idx[arg],
                    edge_type=edge_type2idx[(val, pos_code)])
   return g, edge_type2idx, ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node
+
+
+def gen_dgl_graph(facts, predicates, dataset):
+  """
+      generate directed knowledge graph, where each edge is from subject to object
+  :param facts:
+      dictionary of facts
+  :param predicates:
+      dictionary of predicates
+  :param dataset:
+      dataset object
+  :return:
+      graph object, entity to index, index to entity, relation to index, index to relation
+  """
+  
+  # build bipartite graph (constant nodes and hyper predicate nodes)
+  ent2idx, idx2ent, rel2idx, idx2rel, node2idx, idx2node, facts_idx = gen_index(facts, predicates, dataset)
+  edge_type2idx = gen_edge_type()
+  graph_dict = {}
+  for rel in facts.keys():
+    for fact in facts[rel]:
+      val, args = fact
+      fact_node_idx = node2idx[(rel, args)]
+      for arg in args:
+        pos_code = ''.join(['%d' % (arg == v) for v in args]) #10 or 01
+        if ('fact',edge_type2idx[(val, pos_code)],'entity') not in graph_dict:
+          graph_dict[('fact',edge_type2idx[(val, pos_code)],'entity')] = []
+        graph_dict[('fact',edge_type2idx[(val, pos_code)],'entity')].append((fact_node_idx,node2idx[arg]))
+  print("making dgl graph")
+  g = dgl.heterograph(graph_dict)
+  return g
