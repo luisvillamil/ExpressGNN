@@ -11,7 +11,8 @@ class KnowledgeGraph(object):
     self.graph, self.edge_type2idx, \
         self.ent2idx, self.idx2ent, self.rel2idx, self.idx2rel, \
         self.node2idx, self.idx2node = gen_graph(facts, predicates, dataset)
-    # self.graph = dgl.from_networkx(self.graph2)
+    self.graph2 = dgl.bipartite_from_networkx(self.graph2)
+    print(self.graph2.etypes)
     self.num_ents = len(self.ent2idx)
     self.num_rels = len(self.rel2idx)
     
